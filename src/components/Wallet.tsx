@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import SocialLogin from "@biconomy/web3-auth";
 import { ethers, providers } from "ethers";
 import { ChainId } from "@biconomy/core-types";
 import { BiconomySmartAccount, BiconomySmartAccountConfig } from "@biconomy/account";
+import { bundler, paymaster } from "@/constants";
 
 export default function Wallet() {
   const sdkRef = useRef<SocialLogin | null>(null);
@@ -20,13 +21,15 @@ export default function Wallet() {
     if (interval) {
       configureLogin = setInterval(() => {
         if (!!sdkRef.current?.provider) {
-          // setupSmartAccount();
+          setupSmartAccount();
           clearInterval(configureLogin);
         }
       }, 1000);
     }
   }, [interval]);
 
+
+ ////////////////////////login
   async function login() {
     // If the SDK has not been initialized yet, initialize it
     if (!sdkRef.current) {
@@ -44,10 +47,11 @@ export default function Wallet() {
       enableInterval(true);
     } else {
       console.log("hello");
-      //   setupSmartAccount();
+        setupSmartAccount();
     }
   }
 
+  //////////////////setupSmartAccount FUNCTION
   async function setupSmartAccount() {
     try {
       // If the SDK hasn't fully initialized, return early
@@ -81,4 +85,55 @@ export default function Wallet() {
 
     setLoading(false);
   }
+  ////////////////////   LOGOUT
+  async function logOut() {
+    // Log out of the smart account
+    await sdkRef.current?.logout();
+  
+    // Hide the wallet
+    sdkRef.current?.hideWallet();
+  
+    // Reset state and stop the interval if it was started
+    setSmartAccount(undefined);
+    enableInterval(false);
+  }
+
+
+   ////////////write some JSX to display something on the frontend:
+   return (
+    <Fragment>
+      {/* Logout Button */}
+      {smartAccount && (
+        <button
+          onClick={logOut}
+          className="absolute right-0 m-3 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 px-4 py-2 font-medium transition-all hover:from-green-500 hover:to-blue-600 "
+        >
+          Logout
+        </button>
+      )}
+
+      <div className="m-auto flex h-screen flex-col items-center justify-center gap-10 bg-gray-950">
+        <h1 className=" text-4xl text-gray-50 font-bold tracking-tight lg:text-5xl">
+          Send ERC20 using ERC20
+        </h1>
+
+        {/* Login Button */}
+        {!smartAccount && !loading && (
+          <button
+            onClick={login}
+            className="mt-10 rounded-lg bg-gradient-to-r from-green-400 to-blue-500 px-4 py-2 font-medium  transition-colors hover:from-green-500 hover:to-blue-600"
+          >
+            Login
+          </button>
+        )}
+
+        {/* Loading state */}
+        {loading && <p>Loading account details...</p>}
+
+        {smartAccount && (
+          <Fragment>{/* Add Transfer Component Here */}</Fragment>
+        )}
+      </div>
+    </Fragment>
+  );
 }
